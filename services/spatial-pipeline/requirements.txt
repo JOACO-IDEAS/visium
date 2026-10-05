@@ -1,0 +1,11 @@
+# VISIUM Spatial Pipeline — Python 3.10–3.12 (wheels arm64/x86_64 disponibles)
+open3d>=0.18
+pymeshlab>=2023.12
+trimesh>=4.4
+numpy>=1.26,<3
+pillow>=10
+opencv-python-headless>=4.10
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+# La compresión Draco/WebP usa Node: npx -y @gltf-transform/cli (ver README)

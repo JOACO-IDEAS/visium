@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/Badge";
 import { SplitReveal } from "@/components/ui/SplitReveal";
 import { Reveal } from "@/components/ui/Reveal";

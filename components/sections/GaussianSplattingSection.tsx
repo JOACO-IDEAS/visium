@@ -40,7 +40,7 @@ export function GaussianSplattingSection() {
         <div className="mb-20 flex flex-col items-start gap-6">
           <Badge dot={false}>Section 05 — Gaussian Splatting</Badge>
           <h2 className="max-w-4xl text-balance text-4xl font-semibold leading-[1.04] tracking-tightest sm:text-6xl md:text-7xl">
-            We don't model reality.
+            We don&apos;t model reality.
             <br />
             We <GradientText>capture its light.</GradientText>
           </h2>

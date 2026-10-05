@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const LEAD_INBOX = process.env.LEAD_ALERT_EMAIL ?? "joacochristophersen@gmail.com";
+const LEAD_INBOX = process.env.LEAD_ALERT_EMAIL?.trim();
 
 const EMAIL_RE = /\S+@\S+\.\S+/;
+const esc = (value: string) =>
+  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 function leadEmailHtml(direction: string, email: string) {
   const gold = "#D4B36A";
@@ -24,13 +26,13 @@ function leadEmailHtml(direction: string, email: string) {
           Dirección solicitada
         </p>
         <p style="margin:0 0 24px;font-size:17px;color:${goldBright};">
-          ${direction}
+          ${esc(direction)}
         </p>
         <p style="margin:0 0 6px;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:#5a5a66;">
           Email corporativo
         </p>
         <p style="margin:0;font-size:17px;color:${goldBright};">
-          <a href="mailto:${email}" style="color:${goldBright};text-decoration:none;">${email}</a>
+          <a href="mailto:${esc(email)}" style="color:${goldBright};text-decoration:none;">${esc(email)}</a>
         </p>
       </div>
       <div style="padding:20px 36px;border-top:1px solid rgba(255,255,255,0.06);">
@@ -57,9 +59,8 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    // Sin API key el embudo sigue funcionando; el lead solo queda en el log del server
-    console.error("[send-lead] RESEND_API_KEY no configurada — lead:", { direction, email });
+  if (!apiKey || !LEAD_INBOX) {
+    console.error("[send-lead] lead delivery is not configured");
     return NextResponse.json({ error: "Servicio de alertas no configurado" }, { status: 503 });
   }
 

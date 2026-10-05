@@ -1,5 +1,7 @@
 # Arquitectura — Pipeline de procesamiento estructurado
 
+> Historical design note. The canonical whole-system architecture now lives in `docs/ARCHITECTURE.md`. This document preserves the earlier web-side property-processing design and may describe stubs that now have a separate Python implementation under `services/spatial-pipeline/`; the two are not yet integrated.
+
 > Estado: diseño inicial / prototipo. Nada de lo descrito acá corre en
 > producción todavía — ver `app/api/v1/property-processor/route.ts` y
 > `lib/property-pipeline/` para el estado real del código (stubs).

@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { Resend } from "resend";
 
-const LEAD_INBOX = process.env.LEAD_ALERT_EMAIL ?? "joacochristophersen@gmail.com";
+const LEAD_INBOX = process.env.LEAD_ALERT_EMAIL?.trim();
 const EMAIL_RE = /\S+@\S+\.\S+/;
 
 /* El input del lead se interpola en el HTML del email — sin escape, un
@@ -23,9 +23,8 @@ export async function requestAccess(formData: FormData) {
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    // Sin API key el lead no se pierde en silencio: queda en los logs del server.
-    console.log("[v2/requestAccess] RESEND_API_KEY missing — lead:", { name, email, company, address });
+  if (!apiKey || !LEAD_INBOX) {
+    console.log("[v2/requestAccess] lead delivery is not configured");
     redirect("/v2/thanks");
   }
 
@@ -77,7 +76,7 @@ export async function requestAccess(formData: FormData) {
     });
   } catch (err) {
     // El lead ya quedó registrado en logs; la UX del visitante no se rompe por un fallo de email.
-    console.error("[v2/requestAccess] Resend error:", err, { name, email, company, address });
+    console.error("[v2/requestAccess] Resend error:", err);
   }
 
   redirect("/v2/thanks");
@@ -92,8 +91,8 @@ export async function requestViabilityReport(formData: FormData) {
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) {
-    console.log("[v2/requestViabilityReport] RESEND_API_KEY missing — lead:", { email });
+  if (!apiKey || !LEAD_INBOX) {
+    console.log("[v2/requestViabilityReport] lead delivery is not configured");
     redirect("/v2/thanks");
   }
 
@@ -131,7 +130,7 @@ export async function requestViabilityReport(formData: FormData) {
       `,
     });
   } catch (err) {
-    console.error("[v2/requestViabilityReport] Resend error:", err, { email });
+    console.error("[v2/requestViabilityReport] Resend error:", err);
   }
 
   redirect("/v2/thanks");

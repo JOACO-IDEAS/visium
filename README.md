@@ -1,120 +1,100 @@
-# VISIUM — Walk Through Reality
+# VISIUM
 
-The launch experience for **VISIUM**, a Real Estate 5.0 platform that turns properties into photorealistic, walkable digital twins powered by Gaussian Splatting, spatial computing and real-time rendering.
+VISIUM is a PropTech buyer-intent and lead-qualification system. It uses interaction inside a 3D property experience as a behavioral sensor; the viewer is an input to the intelligence layer, not the final product by itself.
 
-This is not a generic SaaS landing page — it's a cinematic, scroll-driven product film built to feel like Apple Vision Pro × Tesla × Linear × Stripe × Airbnb Luxe.
+```text
+property → 3D interaction → behavioral/spatial events → session intelligence
+         → buyer-intent signals → Visium Score → actionable lead intelligence
+```
 
----
+This repository consolidates the active web experience, spatial-processing service, deterministic scoring engine, and lead-dashboard prototype. Consolidation preserves the components without pretending they are already wired together.
 
-## ✦ Tech stack
+## Actual state
 
-| Layer | Choice |
+### Implemented
+
+- A Next.js marketing/demo application with `/` and `/v2` experiences.
+- A first-person React Three Fiber viewer at `components/v2/TwinViewer.tsx`, loading the tracked `public/models/casa1.glb` model.
+- Pointer-lock mouse look, WASD movement, keyboard rotation/vertical movement, GLB loading, and a local altitude HUD.
+- Lead-capture server actions/API routes with optional Resend delivery.
+- A standalone Python/FastAPI spatial service with mesh cleanup/compression and OpenCV wall detection.
+- A deterministic, tested Visium Score v1 implementation under `packages/scoring/`.
+
+### Prototype or partial
+
+- The property-processor API uses an in-memory job store and TypeScript simulation/stub steps. It is not connected to the Python service.
+- Measurement, furniture-fit/WIF behavior, dwell-time analysis, live score changes, and lead ranking are visual simulations in the web demo.
+- `prototypes/lead-dashboard/index.html` is a standalone synthetic-data prototype, not the deployed application dashboard.
+- The scoring engine is implemented but not imported by the web runtime and has no event store feeding it.
+
+### Planned product thesis
+
+- Durable session/event telemetry, spatial-zone awareness, dwell-time capture, return-visitor identity, real measurement/WIF events, scoring orchestration, persistence, authentication, and actionable lead workflows.
+
+See [current state](docs/CURRENT_STATE.md) and the [technical handoff](docs/TECHNICAL_HANDOFF.md) before planning work.
+
+## Repository structure
+
+| Path | Purpose |
 |---|---|
-| Framework | **Next.js 15** (App Router) |
-| Language | **TypeScript** (strict) |
-| Styling | **Tailwind CSS** + custom design tokens |
-| 2D Motion | **Framer Motion** + **GSAP** |
-| 3D | **Three.js** + **React Three Fiber** + **drei** |
-| Fonts | Inter (UI) + Space Grotesk (display) |
+| `app/`, `components/`, `three/` | Root Next.js web/demo application and 3D experiences |
+| `public/models/casa1.glb` | Tracked GLB used by the first-person viewer |
+| `lib/property-pipeline/` | Web-side prototype contracts/stubs for property processing |
+| `services/spatial-pipeline/` | Standalone Python/FastAPI mesh and wall-detection implementation |
+| `packages/scoring/` | Standalone deterministic Visium Score implementation and tests |
+| `prototypes/lead-dashboard/` | Preserved standalone lead-intelligence UI prototype |
+| `docs/` | Canonical product, architecture, setup, security, deployment, roadmap, and handoff documentation |
 
----
+The existing web application remains at repository root to preserve current Next.js and Vercel assumptions.
 
-## ✦ Getting started
+## Web quickstart
+
+Prerequisites: Node.js 20.9+ and npm.
 
 ```bash
-cd "VISIUM WEB"
-npm install
+npm ci
+cp .env.example .env.local
 npm run dev
 ```
 
-Open <http://localhost:3000>.
+Open `http://localhost:3000`; `/v2` contains the tracked GLB viewer experience.
 
-Production build:
+## Validation
 
 ```bash
-npm run build && npm run start
+npm run lint
+npm run typecheck
+npm test
+npm run build
 ```
 
-> Hero imagery is streamed from Unsplash. Drop your own renders into `public/` and update the URLs in `data/` and the section components to go fully offline.
+`npm test` currently covers the deterministic scoring package. The visual web viewer still lacks automated browser/visual-regression coverage.
 
----
+## Spatial service
 
-## ✦ Design system
+The Python service is independent of the web runtime today. Follow [services/spatial-pipeline/README.md](services/spatial-pipeline/README.md) and [docs/SETUP.md](docs/SETUP.md). Do not infer integration merely because the TypeScript and Python contracts describe similar steps.
 
-Defined in `tailwind.config.ts` and `styles/globals.css`.
+## Assets
 
-| Token | Value | Use |
-|---|---|---|
-| `--void` | `#050505` | Background |
-| `--primary` | `#00D084` | Brand / CTAs |
-| `--secondary` | `#1B1F24` | Surfaces |
-| `--accent` | `#FFFFFF` | Text |
-| `--highlight` | `#6FFFE9` | Glow accents |
+The viewer-reproducing GLB (`public/models/casa1.glb`) is tracked in normal Git. The experimental 186.7 MB `penthouse.splat` is intentionally excluded from Git and Git LFS; see [docs/ASSETS.md](docs/ASSETS.md).
 
-Signatures: glassmorphism (`.glass`), gradient headlines (`.text-gradient`), the cinematic **arc-glow** light source (`.arc-glow`), film grain, and a spatial `cubic-bezier(0.16, 1, 0.3, 1)` easing used everywhere.
+## Deployment
 
----
+The founder-confirmed demo is [https://visium-demo.vercel.app/](https://visium-demo.vercel.app/). Local code and `next.config.mjs` support the demo project’s `/` → `/v2` rewrite through `DEMO_ROOT_V2=1`. No deployment was performed during consolidation. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
-## ✦ Architecture
+## Documentation
 
-```
-VISIUM WEB/
-├── app/                  # App Router: layout, page, metadata, icon
-├── components/
-│   ├── ui/               # GlassCard, GradientText, SectionHeading,
-│   │                     #   MagneticButton, Reveal, Marquee
-│   ├── sections/         # The 6 storytelling sections + CTA
-│   ├── Navbar / Footer / Hero / HeroCanvas / ScrollProgress
-├── three/                # R3F scene: HeroScene, DigitalTwin,
-│   │                     #   SpatialGrid, Particles, Rig
-├── animations/           # Shared Framer Motion variants
-├── hooks/                # useMousePosition, useMediaQuery, useScrollProgress
-├── data/                 # Content: nav, stats, technology, industries
-├── lib/ · utils/         # cn(), math helpers, constants
-├── types/                # Shared TS types
-└── styles/               # globals.css + design tokens
-```
+- [Product](docs/PRODUCT.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Current state](docs/CURRENT_STATE.md)
+- [Setup](docs/SETUP.md)
+- [Security](docs/SECURITY.md)
+- [Deployment](docs/DEPLOYMENT.md)
+- [Assets](docs/ASSETS.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Technical handoff](docs/TECHNICAL_HANDOFF.md)
+- [Agent instructions](AGENTS.md)
 
----
+## Security
 
-## ✦ Storytelling flow (10 sections)
-
-1. **Hero** — `WALK THROUGH REALITY` over a live Three.js digital-twin scene.
-2. **The Problem** — why static photos, video and floor plans fail.
-3. **The Solution** — pinned scroll-morph *looking at* → *walking through*, resolving into Capture · Reconstruct · Explore.
-4. **Immersive Exploration** — freedom of movement, spatial HUD mock.
-5. **Gaussian Splatting** — sticky visual + scroll-synced steps + animated stat counters.
-6. **Digital Twin Platform** — bento grid of capabilities with 3D tilt cards.
-7. **Industry Use Cases** — agencies, developers, luxury, hospitality, construction, portals.
-8. **Future Vision** — *the operating system for spatial real estate.*
-9. **Call To Action** — request a demo.
-10. **Footer** — early-access capture + premium wordmark.
-
-### Motion stack
-- **Framer Motion** — entrance reveals, parallax, magnetic buttons, tilt cards, count-ups, pinned scroll morphs.
-- **GSAP + ScrollTrigger** — word-by-word `SplitReveal` headlines, staggered pillars, scroll-synced active states (`lib/gsap.ts`, `hooks/useGsap.ts`).
-- Fully responsive, with a static fallback under `prefers-reduced-motion`.
-
----
-
-## ✦ The 3D hero
-
-A client-only `<Canvas>` (`three/HeroScene.tsx`, loaded via `next/dynamic` with `ssr:false`):
-
-- a floating **digital twin** — stacked architectural floor-plates with glowing wireframes, a luminous core and an orbiting scan ring;
-- a scrolling **spatial grid** floor;
-- additive **volumetric particles**;
-- cinematic spot + point lighting and ACES tone mapping;
-- a **camera parallax rig** that eases toward the pointer.
-
-Performance: `AdaptiveDpr`, capped `dpr={[1, 2]}`, and a full static fallback for `prefers-reduced-motion`.
-
----
-
-## ✦ Accessibility & performance
-
-- Honors `prefers-reduced-motion` (3D disabled, animations stilled).
-- Semantic landmarks, keyboard-navigable nav, focus-visible CTAs.
-- Lazy 3D, image masking and additive blending kept GPU-light.
-
-© VISIUM Spatial, Inc. — Real Estate 5.0.
+Never commit provider credentials, `.env*` files other than `.env.example`, lead/customer data, local Vercel linkage, Python environments, generated spatial outputs, or proprietary external 3D assets. Real lead delivery and every infrastructure operation require explicit authorization.

@@ -473,7 +473,7 @@ export function ViewerDemoSection() {
     setPhase(0); setCursorPos(null); setActiveEvent(null);
     setDoneIds(new Set()); setAlerts([]); setScore(0); setDashStep(0);
     setProcessing(null);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const startDemo = useCallback(() => {
     clearTimers();
@@ -510,9 +510,9 @@ export function ViewerDemoSection() {
     s(() => setDashStep(2), phase3 + 1500);
     s(() => setDashStep(3), phase3 + 2300);
     LEADS_DASH.forEach((_, i) => s(() => setDashStep(4 + i), phase3 + 2300 + i * 450));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
-  useEffect(() => () => clearTimers(), []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => clearTimers(), []);
 
   const isIdle  = phase === 0;
   const isFloor = phase === 1;

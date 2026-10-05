@@ -19,7 +19,6 @@ export function useGsap<T extends HTMLElement = HTMLDivElement>(
     const self = scope.current;
     const ctx = gsap.context(() => setup({ self }), scope);
     return () => ctx.revert();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   return scope;

@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VISIUM — Agent Dashboard</title>
+  <style>
+    /* ── Design Tokens VISIUM ─────────────────────────────────────────────── */
+    :root {
+      --bg-base:       #0b0d14;
+      --bg-surface:    #111520;
+      --bg-elevated:   #181d2e;
+      --bg-hover:      #1e2438;
+
+      --border:        #252c42;
+      --border-subtle: #1a2030;
+
+      --text-primary:  #e8ecf4;
+      --text-secondary:#8892a8;
+      --text-muted:    #4e586e;
+
+      --accent:        #5b70f5;
+      --accent-glow:   rgba(91,112,245,0.15);
+
+      --hot:           #ef4444;
+      --hot-bg:        rgba(239,68,68,0.12);
+      --warm:          #f97316;
+      --warm-bg:       rgba(249,115,22,0.12);
+      --mild:          #eab308;
+      --mild-bg:       rgba(234,179,8,0.12);
+      --cold:          #3b82f6;
+      --cold-bg:       rgba(59,130,246,0.12);
+
+      --success:       #22c55e;
+      --radius:        8px;
+      --font:          'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── Layout ──────────────────────────────────────────────────────────── */
+    .app-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-surface);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 900;
+      color: white;
+      letter-spacing: -1px;
+    }
+
+    .brand-name {
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.04em;
+    }
+
+    .brand-name span {
+      color: var(--accent);
+    }
+
+    .header-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg-elevated);
+      color: var(--text-secondary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    .btn-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover { opacity: 0.9; }
+
+    .main {
+      padding: 24px;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    /* ── Alert Banner ────────────────────────────────────────────────────── */
+    #alert-panel {
+      display: none;
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      margin-bottom: 20px;
+    }
+
+    #alert-panel.visible { display: flex; align-items: flex-start; gap: 12px; }
+
+    .alert-icon { font-size: 20px; flex-shrink: 0; }
+
+    .alert-body { flex: 1; }
+
+    .alert-title {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--hot);
+      margin-bottom: 6px;
+    }
+
+    .alert-payload {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 11px;
+      color: var(--text-secondary);
+      background: rgba(0,0,0,0.3);
+      border-radius: 4px;
+      padding: 10px 12px;
+      white-space: pre;
+      overflow-x: auto;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+
+    .alert-actions { display: flex; gap: 6px; margin-top: 10px; }
+
+    /* ── KPI Strip ───────────────────────────────────────────────────────── */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .kpi-value.hot  { color: var(--hot);  }
+    .kpi-value.warm { color: var(--warm); }
+    .kpi-value.mild { color: var(--mild); }
+    .kpi-value.neutral { color: var(--accent); }
+
+    /* ── Tabla de Leads ──────────────────────────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .refresh-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .leads-table-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--bg-surface);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      background: var(--bg-elevated);
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background 0.1s;
+      cursor: pointer;
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+
+    tbody tr:hover { background: var(--bg-hover); }
+
+    tbody td {
+      padding: 12px 16px;
+      vertical-align: middle;
+    }
+
+    .lead-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--text-muted);
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .property-chip {
+      display: inline-block;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Score cell */
+    .score-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .score-bar-wrap {
+      width: 80px;
+      height: 4px;
+      background: var(--bg-elevated);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .score-bar {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.4s;
+    }
+
+    .score-num {
+      font-weight: 700;
+      font-size: 15px;
+      min-width: 36px;
+    }
+
+    /* Temperature badge */
+    .temp-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .temp-badge.HOT  { color: var(--hot);  background: var(--hot-bg);  }
+    .temp-badge.WARM { color: var(--warm); background: var(--warm-bg); }
+    .temp-badge.MILD { color: var(--mild); background: var(--mild-bg); }
+    .temp-badge.COLD { color: var(--cold); background: var(--cold-bg); }
+
+    .temp-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .temp-badge.HOT .temp-dot { box-shadow: 0 0 6px var(--hot); }
+
+    /* Signals */
+    .signals-list {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .signal-item {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .signal-item::before { content: "✔ "; color: var(--success); }
+
+    .no-signals {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    /* Last seen */
+    .last-seen {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .return-badge {
+      display: inline-block;
+      background: rgba(91,112,245,0.12);
+      color: var(--accent);
+      border-radius: 3px;
+      padding: 1px 6px;
+      font-size: 10px;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+
+    /* ── Score ring (inline SVG) ─────────────────────────────────────────── */
+    .score-ring {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+    }
+
+    .score-ring svg { transform: rotate(-90deg); }
+
+    .score-ring-num {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* ── Estado vacío / cargando ─────────────────────────────────────────── */
+    .state-row td {
+      padding: 48px 16px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Unreliable score indicator ─────────────────────────────────────── */
+    .unreliable-tag {
+      display: inline-block;
+      border: 1px dashed var(--text-muted);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-left: 6px;
+    }
+
+    /* ── Modal de Alerta ─────────────────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      width: 480px;
+      max-width: 90vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .modal-title {
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 6px;
+      color: var(--hot);
+    }
+
+    .modal-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .modal-payload {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: var(--bg-base);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      color: var(--text-secondary);
+      white-space: pre;
+      overflow-x: auto;
+      max-height: 240px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+
+    .modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  </style>
+</head>
+<body>
+
+<!-- ── App Header ──────────────────────────────────────────────────────────── -->
+<header class="app-header">
+  <div class="brand">
+    <div class="brand-logo">V</div>
+    <span class="brand-name">VISIUM <span>Intelligence</span></span>
+  </div>
+  <span class="header-meta" id="last-refresh">Cargando datos...</span>
+  <div class="header-actions">
+    <button class="btn" onclick="loadLeads()">↻ Actualizar</button>
+    <button class="btn btn-primary" onclick="toggleModal()">⚡ Alert Engine</button>
+  </div>
+</header>
+
+<!-- ── Alert Banner (se muestra cuando hay leads HOT nuevos) ──────────────── -->
+<div class="main">
+  <div id="alert-panel">
+    <div class="alert-icon">🔥</div>
+    <div class="alert-body">
+      <div class="alert-title" id="alert-title">Lead HOT detectado</div>
+      <pre class="alert-payload" id="alert-payload"></pre>
+      <div class="alert-actions">
+        <button class="btn" onclick="copyAlert()">Copiar JSON</button>
+        <button class="btn" onclick="dismissAlert()">Descartar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── KPI Strip ───────────────────────────────────────────────────────── -->
+  <div class="kpi-strip">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Leads</div>
+      <div class="kpi-value neutral" id="kpi-total">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">🔥 HOT</div>
+      <div class="kpi-value hot" id="kpi-hot">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">🌡 WARM</div>
+      <div class="kpi-value warm" id="kpi-warm">—</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Score Promedio</div>
+      <div class="kpi-value mild" id="kpi-avg">—</div>
+    </div>
+  </div>
+
+  <!-- ── Tabla de Leads ──────────────────────────────────────────────────── -->
+  <div class="section-header">
+    <span class="section-title">Prioridad de Contacto — ¿A quién llamo hoy?</span>
+    <span class="refresh-hint" id="refresh-hint">Auto-refresh cada 60s</span>
+  </div>
+
+  <div class="leads-table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Visitor ID</th>
+          <th>Propiedad</th>
+          <th style="width:180px">Score</th>
+          <th>Temperatura</th>
+          <th>Top Señales</th>
+          <th>Última visita</th>
+        </tr>
+      </thead>
+      <tbody id="leads-body">
+        <tr class="state-row">
+          <td colspan="7">
+            <span class="spinner"></span> Conectando con Supabase...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── Modal Alert Engine ─────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOnOverlay(event)">
+  <div class="modal">
+    <div class="modal-title">⚡ Alert Engine — Payload de Notificación</div>
+    <div class="modal-sub">
+      Se genera automáticamente cuando score &gt; 70. Listo para envío a webhook Email/WhatsApp.
+    </div>
+    <pre class="modal-payload" id="modal-payload">Sin alertas pendientes.</pre>
+    <div class="modal-actions">
+      <button class="btn" onclick="copyModalPayload()">Copiar JSON</button>
+      <button class="btn btn-primary" onclick="toggleModal()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Script principal ───────────────────────────────────────────────────── -->
+<script type="module">
+  // ── Configuración Supabase ──────────────────────────────────────────────
+  // IMPORTANTE: reemplazar con tus credenciales reales antes de desplegar.
+  const SUPABASE_URL     = 'https://TU_PROJECT_ID.supabase.co';
+  const SUPABASE_ANON_KEY = 'TU_ANON_KEY';
+
+  // NOTA: importar el cliente via CDN de Supabase
+  // Añadir <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  // antes de este script para entornos sin bundler, y cambiar este import.
+  const { createClient } = await import(
+    'https://esm.sh/@supabase/supabase-js@2'
+  );
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ── PROPERTY_NAMES: fallback de nombre comercial por property_id ────────
+  // Reemplazar con tu tabla de propiedades cuando esté disponible.
+  const PROPERTY_NAMES = {
+    'prop-luxury-01':  'Penthouse Torre Libertad',
+    'prop-economy-02': 'Dpto 2B Palermo Soho',
+  };
+
+  // ── Color por temperatura ───────────────────────────────────────────────
+  const TEMP_COLORS = {
+    HOT:  '#ef4444',
+    WARM: '#f97316',
+    MILD: '#eab308',
+    COLD: '#3b82f6',
+  };
+
+  // ── Alert Engine ─────────────────────────────────────────────────────────
+  // HIPÓTESIS A VALIDAR: leads con score > 70 tienen probabilidad de conversión
+  // suficiente para justificar una intervención proactiva del agente.
+  const ALERT_SCORE_THRESHOLD = 70;
+  const pendingAlerts = [];
+
+  function buildAlertPayload(lead) {
+    const topSignals = (lead.breakdown?.signals ?? [])
+      .filter(s => s.type !== 'DWELL')
+      .slice(0, 3)
+      .map(s => s.label);
+
+    return {
+      type:      'VISIUM_HOT_LEAD',
+      timestamp:  new Date().toISOString(),
+      algorithm_version: lead.algorithm_version ?? 'v1',
+      lead: {
+        visitor_id:   lead.visitor_id,
+        property_id:  lead.property_id,
+        property_name: PROPERTY_NAMES[lead.property_id] ?? lead.property_id,
+        score:         lead.score,
+        temperature:   lead.temperature,
+        score_reliable: lead.score_reliable,
+        is_return:     lead.is_return,
+        last_seen:     lead.computed_at,
+        top_signals:   topSignals,
+      },
+      // Stub de notificación — reemplazar con llamada real a servicio de mensajería
+      notification_stub: {
+        channel:  'whatsapp',
+        to:       'AGENTE_PHONE_NUMBER',
+        message: `🔥 Lead VISIUM — ${PROPERTY_NAMES[lead.property_id] ?? lead.property_id}: Score ${lead.score}/100. ${topSignals.join(', ')}. Contactá ahora.`,
+      },
+    };
+  }
+
+  function evaluateAlerts(leads) {
+    const hotLeads = leads.filter(l => l.score > ALERT_SCORE_THRESHOLD && l.score_reliable !== false);
+    if (hotLeads.length === 0) return;
+
+    const latest = hotLeads[0];
+    const payload = buildAlertPayload(latest);
+    pendingAlerts.push(payload);
+
+    // Mostrar banner de alerta
+    const payloadStr = JSON.stringify(payload, null, 2);
+    document.getElementById('alert-title').textContent =
+      `🔥 Lead HOT — Score ${latest.score} · ${PROPERTY_NAMES[latest.property_id] ?? latest.property_id}`;
+    document.getElementById('alert-payload').textContent = payloadStr;
+    document.getElementById('alert-panel').classList.add('visible');
+
+    // Actualizar modal
+    document.getElementById('modal-payload').textContent = payloadStr;
+  }
+
+  // ── Renderizado de fila ──────────────────────────────────────────────────
+  function renderScoreRing(score, temperature) {
+    const color   = TEMP_COLORS[temperature] ?? '#5b70f5';
+    const radius  = 16;
+    const circ    = 2 * Math.PI * radius;
+    const dash    = (score / 100) * circ;
+    return `
+      <div class="score-ring">
+        <svg width="44" height="44" viewBox="0 0 44 44">
+          <circle cx="22" cy="22" r="${radius}" fill="none" stroke="#1e2438" stroke-width="4"/>
+          <circle cx="22" cy="22" r="${radius}" fill="none" stroke="${color}" stroke-width="4"
+            stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}"
+            stroke-linecap="round"/>
+        </svg>
+        <div class="score-ring-num" style="color:${color}">${Math.round(score)}</div>
+      </div>`;
+  }
+
+  function renderSignals(breakdown) {
+    const signals = (breakdown?.signals ?? [])
+      .filter(s => s.type !== 'DWELL')
+      .slice(0, 3);
+
+    if (signals.length === 0) {
+      return '<span class="no-signals">Sin señales activas</span>';
+    }
+
+    return `<div class="signals-list">
+      ${signals.map(s => `<span class="signal-item">${s.label}</span>`).join('')}
+    </div>`;
+  }
+
+  function renderTemperatureBadge(temperature) {
+    const icons = { HOT: '🔥', WARM: '🌡', MILD: '💛', COLD: '🔵' };
+    return `<span class="temp-badge ${temperature}">
+      <span class="temp-dot"></span>${icons[temperature] ?? ''} ${temperature}
+    </span>`;
+  }
+
+  function formatRelativeTime(isoString) {
+    if (!isoString) return '—';
+    const diff = Date.now() - new Date(isoString).getTime();
+    const mins  = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days  = Math.floor(diff / 86400000);
+    if (mins  < 1)   return 'Justo ahora';
+    if (mins  < 60)  return `Hace ${mins}m`;
+    if (hours < 24)  return `Hace ${hours}h`;
+    return `Hace ${days}d`;
+  }
+
+  function renderRow(lead, index) {
+    const propertyName = PROPERTY_NAMES[lead.property_id] ?? lead.property_id;
+    const visitorShort = lead.visitor_id
+      ? lead.visitor_id.split('-').pop()
+      : 'anónimo';
+
+    const unreliableTag = lead.score_reliable === false
+      ? '<span class="unreliable-tag" title="scale_confidence < 0.70">⚠ escala</span>'
+      : '';
+
+    const returnTag = lead.is_return
+      ? '<span class="return-badge">↩ RETORNO</span>'
+      : '';
+
+    return `
+      <tr onclick="showLeadModal('${lead.session_id}')">
+        <td style="color:var(--text-muted);font-size:12px">${index + 1}</td>
+        <td>
+          <div class="lead-id" title="${lead.visitor_id ?? ''}">…${visitorShort}</div>
+          ${returnTag}
+        </td>
+        <td><span class="property-chip" title="${lead.property_id}">${propertyName}</span></td>
+        <td>
+          <div class="score-cell">
+            ${renderScoreRing(lead.score, lead.temperature)}
+            ${unreliableTag}
+          </div>
+        </td>
+        <td>${renderTemperatureBadge(lead.temperature)}</td>
+        <td>${renderSignals(lead.breakdown)}</td>
+        <td class="last-seen">${formatRelativeTime(lead.computed_at)}</td>
+      </tr>`;
+  }
+
+  // ── Carga de datos ──────────────────────────────────────────────────────
+  window.loadLeads = async function () {
+    const tbody = document.getElementById('leads-body');
+    tbody.innerHTML = `<tr class="state-row"><td colspan="7"><span class="spinner"></span> Actualizando...</td></tr>`;
+
+    const { data: leads, error } = await supabase
+      .from('visium_scores')
+      .select(`
+        session_id, visitor_id, property_id, score, temperature,
+        zone_score, conversion_score, score_reliable, is_return,
+        algorithm_version, computed_at, breakdown
+      `)
+      .order('score',       { ascending: false })
+      .order('computed_at', { ascending: false })
+      .limit(50);
+
+    if (error) {
+      tbody.innerHTML = `<tr class="state-row"><td colspan="7">
+        Error al cargar: ${error.message}
+      </td></tr>`;
+      return;
+    }
+
+    if (!leads || leads.length === 0) {
+      tbody.innerHTML = `<tr class="state-row"><td colspan="7">
+        Sin sesiones registradas aún. Esperando telemetría del viewer...
+      </td></tr>`;
+      return;
+    }
+
+    // Renderizar filas
+    tbody.innerHTML = leads.map((lead, i) => renderRow(lead, i)).join('');
+
+    // KPIs
+    document.getElementById('kpi-total').textContent = leads.length;
+    document.getElementById('kpi-hot').textContent   = leads.filter(l => l.temperature === 'HOT').length;
+    document.getElementById('kpi-warm').textContent  = leads.filter(l => l.temperature === 'WARM').length;
+    const avg = leads.reduce((s, l) => s + l.score, 0) / leads.length;
+    document.getElementById('kpi-avg').textContent   = avg.toFixed(1);
+
+    // Header
+    const now = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('last-refresh').textContent = `Actualizado: ${now}`;
+
+    // Alert Engine
+    evaluateAlerts(leads);
+  };
+
+  // ── Alert UI helpers ────────────────────────────────────────────────────
+  window.dismissAlert = () => document.getElementById('alert-panel').classList.remove('visible');
+
+  window.copyAlert = () => {
+    const text = document.getElementById('alert-payload').textContent;
+    navigator.clipboard.writeText(text).then(() => alert('JSON copiado'));
+  };
+
+  window.toggleModal = () => {
+    document.getElementById('modal-overlay').classList.toggle('open');
+  };
+
+  window.closeModalOnOverlay = (e) => {
+    if (e.target === document.getElementById('modal-overlay')) toggleModal();
+  };
+
+  window.copyModalPayload = () => {
+    const text = document.getElementById('modal-payload').textContent;
+    navigator.clipboard.writeText(text).then(() => alert('JSON copiado'));
+  };
+
+  window.showLeadModal = (sessionId) => {
+    // Placeholder: en PR-5 abrirá el detalle de sesión con timeline
+    console.log('[VISIUM] Detalle de sesión:', sessionId);
+  };
+
+  // ── Bootstrap + auto-refresh ────────────────────────────────────────────
+  loadLeads();
+  setInterval(loadLeads, 60_000);
+
+  // Subscripción realtime para alertas inmediatas en inserts nuevos
+  supabase
+    .channel('visium-scores-live')
+    .on('postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'visium_scores' },
+      (payload) => {
+        const newLead = payload.new;
+        // Re-cargar tabla y evaluar alerta del nuevo lead
+        loadLeads();
+        if (newLead.score > ALERT_SCORE_THRESHOLD && newLead.score_reliable !== false) {
+          const alertPayload = buildAlertPayload(newLead);
+          const payloadStr = JSON.stringify(alertPayload, null, 2);
+          document.getElementById('alert-title').textContent =
+            `🔥 Nuevo Lead HOT en tiempo real — Score ${newLead.score}`;
+          document.getElementById('alert-payload').textContent = payloadStr;
+          document.getElementById('alert-panel').classList.add('visible');
+          document.getElementById('modal-payload').textContent = payloadStr;
+        }
+      }
+    )
+    .subscribe();
+</script>
+
+</body>
+</html>

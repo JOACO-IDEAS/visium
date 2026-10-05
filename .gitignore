@@ -13,7 +13,12 @@ next-env.d.ts
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
+*.key
+*.p12
+*.pfx
+*.log
 
 # debug
 npm-debug.log*
@@ -35,3 +40,30 @@ yarn-error.log*
 .mcp.json
 .vercel
 .env*
+!.env.example
+
+# Python / spatial service
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Local/proprietary 3D assets and generated spatial output
+*.splat
+services/spatial-pipeline/input/
+services/spatial-pipeline/output/
+services/spatial-pipeline/tmp/
+
+# Local experiments and agent/tool state
+scripts/boardroom/
+.cursorrules*
+.claude/
+.codex/
+
+# Reports and captured output
+reports/
+screenshots/
+test-results/
+coverage/

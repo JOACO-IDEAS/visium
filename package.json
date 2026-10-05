@@ -3,11 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "description": "VISIUM — Walk Through Reality. The operating system for spatial real estate.",
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test packages/scoring/computeVisiumScore.test.js",
+    "test:scoring": "node --test packages/scoring/computeVisiumScore.test.js"
   },
   "dependencies": {
     "@react-three/drei": "^10.0.0",
@@ -23,6 +29,7 @@
     "three": "^0.171.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.5",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
